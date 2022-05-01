@@ -1,0 +1,14 @@
+read_target:
+  file_name: "read.xlsx"
+  sheet_number: 0
+  sheet_name: "Sheet1"
+  column_key: "B"
+  column_definition: ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
+  row_definition: 2
+
+write_target:
+  file_name: "write.xlsx"
+  sheet_number: 0
+  sheet_name: "Sheet1"
+  column_definition: ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
+  row_definition: 2
