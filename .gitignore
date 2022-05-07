@@ -1,4 +1,5 @@
 __pycache__
 *.xlsx
-!test/read.xlsx
-!test/write.xlsx
+*.tmp
+!test/テスト_read.xlsx
+!test/template_write.xlsx
