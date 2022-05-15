@@ -5,6 +5,7 @@ import os
 import sys
 import traceback
 import yaml
+import re
 
 try:
     import openpyxl as opyxl
@@ -13,24 +14,6 @@ try:
 except:
     print("[ERROR] openpyxl がインストールされていない可能性があります。")
     print(traceback.format_exc())
-
-def check_if_file_exists(file_path)->bool:
-    if os.path.exists(file_path):
-        return True
-    else:
-        return False
-
-def get_yaml_data(yaml_file)->dict:
-    try:
-        with open(yaml_file, encoding='utf8') as file:
-            yaml_data = yaml.safe_load(file)
-        return yaml_data
-    except PermissionError as pe:
-        raise PermissionError("[ERROR get_yaml_data] ファイルへのアクセス権限がありません。-> " + str(pe))
-    except FileNotFoundError as fe:
-        raise FileNotFoundError("[ERROR] get_yaml_data ファイルが存在しません。-> " + str(fe))
-    except Exception as e:
-            raise Exception("[ERROR get_yaml_data] Unexpected Error has been ocurred. -> " + str(e))
 
 class OpyxlWrapper:
     def __init__(self, exel_file) -> None:
@@ -92,14 +75,45 @@ class OpyxlWrapper:
         except Exception as e:
             raise Exception("[ERROR get_cellcolor] Unexpected Error has been ocurred. -> " + str(e))
 
-    def get_alignment(self, row_number, column_a)->dict:
+    def get_cellalignment(self, row_number, column_a)->dict:
         if self.worksheet == None:
-            raise Exception("[ERROR: get_alignment] Exel file and worksheet have not been loaded yet.")
+            raise Exception("[ERROR: get_cellalignment] Exel file and worksheet have not been loaded yet.")
         try:
             specified_cell = column_a + str(row_number)
             return self.worksheet[specified_cell].alignment
         except Exception as e:
-            raise Exception("[ERROR get_alignment] Unexpected Error has been ocurred. -> " + str(e))
+            raise Exception("[ERROR get_cellalignment] Unexpected Error has been ocurred. -> " + str(e))
+
+    def _get_mergedcells(self)->object:
+        if self.worksheet == None:
+            raise Exception("[ERROR: _get_mergedcells] Exel file and worksheet have not been loaded yet.")
+        try:
+            return self.worksheet.merged_cells
+        except Exception as e:
+            raise Exception("[ERROR _get_mergedcells] Unexpected Error has been ocurred. -> " + str(e))
+
+    def _is_mergedcell_correct_format(self, target_str):
+        # "A3:AB4" のフォーマットであるかを正規表現で検索する
+        re_result = re.search(r'^[A-Z]+[0-9]+:[A-Z]+[0-9]+$', target_str)
+        if re_result == None:
+            return False
+        else:
+            return True
+
+    def get_mergedcells_list(self)->list:
+        if self.worksheet == None:
+            raise Exception("[ERROR: get_mergedcells_list] Exel file and worksheet have not been loaded yet.")
+        try:
+            merged_cells = self._get_mergedcells()
+            merged_cells_list = []
+            for merged_cell in merged_cells:
+                merged_cell_char = str(merged_cell)
+                if self._is_mergedcell_correct_format(merged_cell_char) == False:
+                    raise Exception("merged_cell_char is incorrect. -> '{0}'".format(merged_cell_char))
+                merged_cells_list.append(merged_cell_char.split(':'))
+            return merged_cells_list
+        except Exception as e:
+            raise Exception("[ERROR get_mergedcells_list] Unexpected Error has been ocurred. -> " + str(e))
 
     def write_celldata(self, row_number, column_a, cell_value):
         if self.worksheet == None:
@@ -145,7 +159,7 @@ class OpyxlWrapper:
         try:
             specified_cell = column_a + str(row_number)
             # 横位置を「標準」で定義する場合は "general" を指定するが、
-            # get_alignmentした結果は 0 となるため、ここでは「標準」を 0 として処理することとする。
+            # get_cellalignmentした結果は 0 となるため、ここでは「標準」を 0 として処理することとする。
             if horizontal==None:
                 horizontal="general"
             self.worksheet[specified_cell].alignment = Alignment(
@@ -161,11 +175,22 @@ class OpyxlWrapper:
         except Exception as e:
             raise Exception("[ERROR set_alignment] Unexpected Error has been ocurred. -> " + str(e))
 
+    # https://openpyxl.readthedocs.io/en/stable/usage.html#merge-unmerge-cells
+    def merge_cells(self, target_cells):
+        if self.worksheet == None:
+            raise Exception("[ERROR: merge_cells] Exel file and worksheet have not been loaded yet.")
+        try:
+            self.worksheet.merge_cells(target_cells)
+        except Exception as e:
+            raise Exception("[ERROR merge_cells] Unexpected Error has been ocurred. -> " + str(e))
+
     def save_workbook(self):
         if self.workbook == None:
             raise Exception("[ERROR: save_workbook] Exel file has not been loaded yet.")
         try:
             self.workbook.save(self.exel_file)
+        except PermissionError as pe:
+            raise PermissionError("[ERROR save_workbook] ファイルへのアクセス権限がありません。-> " + str(pe))
         except Exception as e:
             raise Exception("[ERROR save_workbook] Unexpected Error has been ocurred. -> " + str(e))
 
@@ -181,7 +206,36 @@ class OpyxlWrapper:
         except Exception as e:
             raise Exception("[ERROR close_workbook] Unexpected Error has been ocurred. -> " + str(e))
 
+
+def check_if_file_exists(file_path)->bool:
+    if os.path.exists(file_path):
+        return True
+    else:
+        return False
+
+def get_yaml_data(yaml_file)->dict:
+    try:
+        with open(yaml_file, encoding='utf8') as file:
+            yaml_data = yaml.safe_load(file)
+        return yaml_data
+    except PermissionError as pe:
+        raise PermissionError("[ERROR get_yaml_data] ファイルへのアクセス権限がありません。-> " + str(pe))
+    except FileNotFoundError as fe:
+        raise FileNotFoundError("[ERROR] get_yaml_data ファイルが存在しません。-> " + str(fe))
+    except Exception as e:
+            raise Exception("[ERROR get_yaml_data] Unexpected Error has been ocurred. -> " + str(e))
+
+def readparent2writeparent(read_parent, read_row, write_row)->str:
+    re_result = re.search(r'^([A-Z]+)([0-9]+)$', read_parent)
+    if re_result == None:
+        raise Exception("[ERROR readparent2writeparent] read_parent is incorrect format. -> " + str(read_parent))
+    row_delta = write_row - read_row
+    if row_delta < 0:
+        raise Exception("[ERROR readparent2writeparent] rwrite_row < row_delta. row_delta -> " + str(row_delta))
+    return re_result.group(1) + str(int(re_result.group(2)) + row_delta)
+
 def main():
+    print("[INFO] 処理を開始します。")
     try:
         # fielddefinition.yml を読み込む
         fielddefinition = "fielddefinition.yml"
@@ -189,7 +243,7 @@ def main():
             raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=fielddefinition))
         yaml_data = get_yaml_data(fielddefinition)
 
-        # 転記元Excelファイルを読み込む
+        # 読み込み対象のExcelファイルを読み込む
         read_target_filename = yaml_data["read_target"]["file_name"]
         if check_if_file_exists(read_target_filename) == False:
             raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=read_target_filename))
@@ -197,12 +251,13 @@ def main():
         read_target_sheetname = yaml_data["read_target"].get("sheet_name", None)
         read_target_column = yaml_data["read_target"]["column_definition"]
         read_target_row = yaml_data["read_target"]["row_definition"]
-        read_target_key = yaml_data["read_target"]["column_key"]
+        read_target_row_max = yaml_data["read_target"]["row_max"]
         opened_read_target = OpyxlWrapper(read_target_filename)
         opened_read_target.load_workbook()
         opened_read_target.load_worksheet(read_target_sheetnumber, read_target_sheetname)
-
-        # 転記先Excelファイルを読み込む
+        # 読み込み対象のExcelファイルから結合されたセルのリストを取得する
+        mergedcells_list = opened_read_target.get_mergedcells_list()
+        # 書き込み対象のExcelファイルを読み込む
         write_target_filename = yaml_data["write_target"]["file_name"]
         if check_if_file_exists(write_target_filename) == False:
             raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=write_target_filename))
@@ -213,54 +268,67 @@ def main():
         opened_write_target = OpyxlWrapper(write_target_filename)
         opened_write_target.load_workbook()
         opened_write_target.load_worksheet(write_target_sheetnumber, write_target_sheetname)
-
-        # 転記を実行する
+        # 転記先と転記元における対象カラムの数が合わない場合はエラー
         if len(read_target_column) != len(write_target_column):
             print("[ERROR main] 転記先と転記元における対象カラムの数が合いません。")
-        read_row = read_target_row
-        write_row = write_target_row
-        # 行を軸としてループする -> 無限ループ防止処理は終わりの行で行う
-        while True:
-            # キーとなるカラムの値が空であることを検知したら処理を停止する
-            key_value = opened_read_target.get_celldata(read_row, read_target_key)
-            if key_value == None or key_value == "":
-                break
-            # 指定されたカラムの分だけ処理する
-            for column_num in range(len(read_target_column)):
+
+
+        # 列を軸としてループする
+        ## 指定されたカラムの分だけループ処理する
+        for column_num in range(len(read_target_column)):
+            # 読み込み対象の行の開始番号を定義する
+            read_row = read_target_row
+            # 書き込み対象の行の開始番号を定義する
+            write_row = write_target_row
+            ## 行ループを開始する -> 処理する行の最大値までループする
+            while read_row <= read_target_row_max:
                 # 読み込み対象のセルを指定する
                 read_column = read_target_column[column_num]
-                ## セルの値を取得する
+                # セルの値を取得する
                 read_value = opened_read_target.get_celldata(read_row, read_column)
-                ## セルの色を取得する
+                # セルの色を取得する
                 read_color = opened_read_target.get_cellcolor(read_row, read_column)
-                ## セルの書式設定を取得する
-                read_alignment = opened_read_target.get_alignment(read_row, read_column)
-                
+                # セルの書式設定を取得する
+                read_alignment = opened_read_target.get_cellalignment(read_row, read_column)
                 # 書き込み対象のカラムを指定する
                 write_column = write_target_column[column_num]
-                ## セルの値を書き込む
-                opened_write_target.write_celldata(write_row, write_column, read_value)
-                ## セルに色を適用する
-                opened_write_target.fill_cellcolor(write_row, write_column, read_color)
-                ## セルの書式設定を適用する
-                opened_write_target.set_alignment(
-                    write_row, write_column,
-                    horizontal=read_alignment.horizontal,
-                    vertical=read_alignment.vertical,
-                    text_rotation=read_alignment.text_rotation,
-                    wrap_text=read_alignment.wrap_text,
-                    shrink_to_fit=read_alignment.shrink_to_fit,
-                    indent=read_alignment.indent,
-                    justifyLastLine=read_alignment.justifyLastLine,
-                    readingOrder=read_alignment.readingOrder
-                    )
-                print("[INFO] 書き込みファイルのセル: {col}{row} を処理しました。".format(col=write_column, row=write_row))
-            # 行番号をインクリメントする
-            read_row += 1
-            write_row += 1
-            # 無限ループ防止 -> 10000行
-            if read_row == 10000:
-                break
+                # "A1"の形式で読み込み対象のセルを定義する
+                read_cell = read_column + str(read_row)
+                # "A1"の形式で書き込み対象のセルを定義する
+                write_cell = write_column + str(write_row)
+                # セルのマージを実行する
+                for merged_cells in mergedcells_list:
+                    # merged_cellsリストの0番目がセル結合の開始セルとなるため
+                    # それが読み込み対象のセルと一致している場合のみセル結合を行う
+                    if merged_cells[0] == read_cell:
+                        # merged_cellsリストの1番目がセル結合の終端セルとなるため
+                        # その情報から書き込み対象セルの終端を求める
+                        merge_cells_parent = write_cell + ":" + readparent2writeparent(merged_cells[1], read_target_row, write_target_row)
+                        opened_write_target.merge_cells(merge_cells_parent)
+                        print("[INFO] {needed_merge_cells} をセル結合しました。".format(needed_merge_cells=merge_cells_parent))
+                        break
+                # セルの値が空でない場合のみセルへの書き込みを実行する
+                if read_value != None and read_value != "":
+                    # セルの値を書き込む
+                    opened_write_target.write_celldata(write_row, write_column, read_value)
+                    # セルに色を適用する
+                    opened_write_target.fill_cellcolor(write_row, write_column, read_color)
+                    # セルの書式設定を適用する
+                    opened_write_target.set_alignment(
+                        write_row, write_column,
+                        horizontal=read_alignment.horizontal,
+                        vertical=read_alignment.vertical,
+                        text_rotation=read_alignment.text_rotation,
+                        wrap_text=read_alignment.wrap_text,
+                        shrink_to_fit=read_alignment.shrink_to_fit,
+                        indent=read_alignment.indent,
+                        justifyLastLine=read_alignment.justifyLastLine,
+                        readingOrder=read_alignment.readingOrder
+                        )
+                    print("[INFO] 書き込みファイルのセル: {col}{row} を処理しました。".format(col=write_column, row=write_row))
+                # 行番号をインクリメントする
+                read_row += 1
+                write_row += 1
 
         # 保存して終了する
         opened_read_target.close_workbook()
@@ -270,6 +338,7 @@ def main():
         sys.exit(0)
 
     except Exception as e:
+        print("[ERROR] 処理が異常終了しました。")
         print(str(e))
         print(str(traceback.format_exc()))
         sys.exit(1)

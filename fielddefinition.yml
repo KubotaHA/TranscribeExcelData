@@ -1,13 +1,13 @@
 read_target:
-  file_name: "テスト_read.xlsx"
+  file_name: "/mnt/c/Temp/テスト_read.xlsx"
   sheet_number: 1
   sheet_name: "Sheet1"
-  column_key: "B"
   column_definition: ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
   row_definition: 2
+  row_max: 10
 
 write_target:
-  file_name: "write.xlsx"
+  file_name: "/mnt/c/Temp/write.xlsx"
   sheet_number: 1
   sheet_name: "Sheet1"
   column_definition: ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
