@@ -64,6 +64,7 @@ write_target:
   sheet_name: "Sheet1"
   column_definition: ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
   row_definition: 4
+  item_number_column: "B"
 """     )
         actually_result = ted.get_yaml_data(self.yaml_filename)
         self.assertEqual(dict(yaml.safe_load(expected_result)), actually_result)
@@ -112,30 +113,30 @@ class Test_get_cellcolor(unittest.TestCase):
     def test_case_01(self):
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        actually_result = self.ow.get_cellcolor(2, "B")
-        expected_result = 'FFFFFF00'
-        self.assertEqual(expected_result, actually_result)
+        actually_result_colorindex, actually_result_index_filltype= self.ow.get_cellcolor(2, "B")
+        self.assertEqual('FFFFFF00', actually_result_colorindex)
+        self.assertEqual("solid", actually_result_index_filltype)
     # 黒セル -> int: 1
     def test_case_02(self):
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        actually_result = self.ow.get_cellcolor(2, "G")
-        expected_result = 1
-        self.assertEqual(expected_result, actually_result)
+        actually_result_colorindex, actually_result_index_filltype = self.ow.get_cellcolor(2, "G")
+        self.assertEqual(1, actually_result_colorindex)
+        self.assertEqual("solid", actually_result_index_filltype)
     # 白セル -> int: 0
     def test_case_03(self):
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        actually_result = self.ow.get_cellcolor(2, "H")
-        expected_result = 0
-        self.assertEqual(expected_result, actually_result)
+        actually_result_colorindex, actually_result_index_filltype = self.ow.get_cellcolor(2, "H")
+        self.assertEqual(0, actually_result_colorindex)
+        self.assertEqual("solid", actually_result_index_filltype)
     # 塗りつぶし無しセル -> str: '00000000'
     def test_case_04(self):
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        actually_result = self.ow.get_cellcolor(2, "I")
-        expected_result = '00000000'
-        self.assertEqual(expected_result, actually_result)
+        actually_result_colorindex, actually_result_index_filltype = self.ow.get_cellcolor(2, "I")
+        self.assertEqual('00000000', actually_result_colorindex)
+        self.assertEqual(None, actually_result_index_filltype)
 
 ###############################################################################
 # test -> OpyxlWrapper -> fill_cellcolor
@@ -168,9 +169,9 @@ class Test_fill_cellcolor(unittest.TestCase):
         self.ow = ted.OpyxlWrapper(self.xlsx_file_name)
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        actually_result = self.ow.get_cellcolor(4, "B")
-        expected_result = 'FFFFFF00'
-        self.assertEqual(expected_result, actually_result)
+        actually_result_colorindex, actually_result_filltype = self.ow.get_cellcolor(4, "B")
+        self.assertEqual('FFFFFF00', actually_result_colorindex)
+        self.assertEqual('solid', actually_result_filltype)
     # 白セル -> int: 1
     def test_case_02(self):
         # set workbook
@@ -183,9 +184,9 @@ class Test_fill_cellcolor(unittest.TestCase):
         self.ow = ted.OpyxlWrapper(self.xlsx_file_name)
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        actually_result = self.ow.get_cellcolor(4, "C")
-        expected_result = 1
-        self.assertEqual(expected_result, actually_result)
+        actually_result_colorindex, actually_result_filltype = self.ow.get_cellcolor(4, "C")
+        self.assertEqual(0, actually_result_colorindex)
+        self.assertEqual("solid", actually_result_filltype)
     # 黒セル -> int: 0
     def test_case_03(self):
         # set workbook
@@ -198,26 +199,26 @@ class Test_fill_cellcolor(unittest.TestCase):
         self.ow = ted.OpyxlWrapper(self.xlsx_file_name)
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        actually_result = self.ow.get_cellcolor(4, "D")
-        expected_result = 0
-        self.assertEqual(expected_result, actually_result)
+        actually_result_colorindex, actually_result_filltype = self.ow.get_cellcolor(4, "D")
+        self.assertEqual(1, actually_result_colorindex)
+        self.assertEqual("solid", actually_result_filltype)
     # 塗りつぶし無しセル -> str: '00000000'
     ## Colorクラスでは'00000000'は「黒」を示すが、色なしセルをget_cellcolorした返り値が'00000000'であるため、
-    ## ここでは「色なし」を'00000000'として処理することとする。
+    ## ここでは「色なし」を filltype == None の場合のみ処理することとする。
     def test_case_04(self):
         # set workbook
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        self.ow.fill_cellcolor(4, "E", '00000000')
+        self.ow.fill_cellcolor(4, "E", '00000000', None)
         self.ow.save_workbook()
         self.ow.close_workbook()
         # reopen workbook
         self.ow = ted.OpyxlWrapper(self.xlsx_file_name)
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
-        actually_result = self.ow.get_cellcolor(4, "E")
-        expected_result = '00000000'
-        self.assertEqual(expected_result, actually_result)
+        actually_result_colorindex, actually_result_filltype = self.ow.get_cellcolor(4, "E")
+        self.assertEqual("00000000", actually_result_colorindex)
+        self.assertEqual(None, actually_result_filltype)
 
 ###############################################################################
 # test -> OpyxlWrapper -> get_cellalignment

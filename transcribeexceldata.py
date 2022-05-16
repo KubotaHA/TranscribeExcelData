@@ -49,7 +49,7 @@ class OpyxlWrapper:
             # シート名で指定
             elif sheet_number == None and sheet_name != None:
                 self.worksheet = self.workbook[sheet_name]
-            # シート名で指定 ※シート番号よりも優先
+            # シート番号とシート名で指定 ※シート名を使用する
             elif sheet_number != None and sheet_name != None:
                 self.worksheet = self.workbook[sheet_name]
             else:
@@ -71,7 +71,9 @@ class OpyxlWrapper:
             raise Exception("[ERROR: get_cellcolor] Exel file and worksheet have not been loaded yet.")
         try:
             specified_cell = column_a + str(row_number)
-            return self.worksheet[specified_cell].fill.start_color.index
+            # FIXME: cell.fillを返すようにしたい
+            return (self.worksheet[specified_cell].fill.start_color.index,
+                    self.worksheet[specified_cell].fill.fill_type)
         except Exception as e:
             raise Exception("[ERROR get_cellcolor] Unexpected Error has been ocurred. -> " + str(e))
 
@@ -126,10 +128,21 @@ class OpyxlWrapper:
 
     # https://openpyxl.readthedocs.io/en/stable/api/openpyxl.styles.fills.html
     # https://openpyxl.readthedocs.io/en/stable/styles.html
-    def fill_cellcolor(self, row_number, column_a, color_index):
+    def fill_cellcolor(self, row_number, column_a, color_index, filltype="solid"):
+        # FIXME: color_indexの扱いが！暫定として以下の糞実装とする！
         try:
             if self.worksheet == None:
                 raise Exception("Exel file and worksheet have not been loaded yet.")
+            if type(color_index) == int:
+                ## FIXME: 黒
+                if color_index == 1:
+                    color_index = 0
+                ## FIXME: 白
+                elif color_index == 0:
+                    color_index = 1
+                ## FIXME: 色なしにする
+                else:
+                    color_index = '00000000'
             # color_index: 0-63
             if type(color_index) == int:
                 my_color = Color(indexed=color_index)
@@ -140,13 +153,13 @@ class OpyxlWrapper:
                 raise Exception("[ERROR: fill_cellcolor] Unexpected color_index has been ocurred..")
             specified_cell = column_a + str(row_number)
             # Colorクラスでは'00000000'は「黒」を示すが、色なしセルをget_cellcolorした返り値が'00000000'であるため、
-            # ここでは「色なし」を'00000000'として処理することとする。
+            # ここでは「色なし」を filltype == None の場合のみ処理することとする。
             # また、「黒」のセルについてget_cellcolorした場合の返り値は int型で 0 であるため、
             # fill_cellcolorの color_index に int型で 0 を指定することでfill可能である
-            if color_index == '00000000':
+            if color_index == "00000000" and filltype == None:
                 self.worksheet[specified_cell].fill = PatternFill(fill_type=None)
             else:
-                self.worksheet[specified_cell].fill = PatternFill(patternType='solid', fgColor=my_color)
+                self.worksheet[specified_cell].fill = PatternFill(patternType=filltype, fgColor=my_color)
         except Exception as e:
             raise Exception("[ERROR get_cellcollor] Unexpected Error has been ocurred. -> " + str(e))
 
@@ -230,8 +243,6 @@ def readparent2writeparent(read_parent, read_row, write_row)->str:
     if re_result == None:
         raise Exception("[ERROR readparent2writeparent] read_parent is incorrect format. -> " + str(read_parent))
     row_delta = write_row - read_row
-    if row_delta < 0:
-        raise Exception("[ERROR readparent2writeparent] rwrite_row < row_delta. row_delta -> " + str(row_delta))
     return re_result.group(1) + str(int(re_result.group(2)) + row_delta)
 
 def main():
@@ -287,7 +298,7 @@ def main():
                 # セルの値を取得する
                 read_value = opened_read_target.get_celldata(read_row, read_column)
                 # セルの色を取得する
-                read_color = opened_read_target.get_cellcolor(read_row, read_column)
+                read_color, read_filltype = opened_read_target.get_cellcolor(read_row, read_column)
                 # セルの書式設定を取得する
                 read_alignment = opened_read_target.get_cellalignment(read_row, read_column)
                 # 書き込み対象のカラムを指定する
@@ -312,7 +323,7 @@ def main():
                     # セルの値を書き込む
                     opened_write_target.write_celldata(write_row, write_column, read_value)
                     # セルに色を適用する
-                    opened_write_target.fill_cellcolor(write_row, write_column, read_color)
+                    opened_write_target.fill_cellcolor(write_row, write_column, read_color, read_filltype)
                     # セルの書式設定を適用する
                     opened_write_target.set_alignment(
                         write_row, write_column,
@@ -325,6 +336,7 @@ def main():
                         justifyLastLine=read_alignment.justifyLastLine,
                         readingOrder=read_alignment.readingOrder
                         )
+                    print("read_color: " + str(read_color) + " type: " + str(type(read_color)))
                     print("[INFO] 書き込みファイルのセル: {col}{row} を処理しました。".format(col=write_column, row=write_row))
                 # 行番号をインクリメントする
                 read_row += 1
