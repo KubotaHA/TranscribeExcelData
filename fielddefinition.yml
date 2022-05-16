@@ -12,3 +12,4 @@ write_target:
   sheet_name: "Sheet1"
   column_definition: ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
   row_definition: 4
+  item_number_column: "B"
