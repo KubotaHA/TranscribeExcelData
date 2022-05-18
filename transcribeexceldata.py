@@ -129,37 +129,38 @@ class OpyxlWrapper:
     # https://openpyxl.readthedocs.io/en/stable/api/openpyxl.styles.fills.html
     # https://openpyxl.readthedocs.io/en/stable/styles.html
     def fill_cellcolor(self, row_number, column_a, color_index, filltype="solid"):
-        # FIXME: color_indexの扱いが！暫定として以下の糞実装とする！
+        # FIXME: 正しく色が反映されないため何も処理しない
         try:
-            if self.worksheet == None:
-                raise Exception("Exel file and worksheet have not been loaded yet.")
-            if type(color_index) == int:
-                ## FIXME: 黒
-                if color_index == 1:
-                    color_index = 0
-                ## FIXME: 白
-                elif color_index == 0:
-                    color_index = 1
-                ## FIXME: 色なしにする
-                else:
-                    color_index = '00000000'
-            # color_index: 0-63
-            if type(color_index) == int:
-                my_color = Color(indexed=color_index)
-            # color_index: 00000000-FFFFFFFF
-            elif type(color_index) == str:
-                my_color = Color(rgb=color_index)
-            else:
-                raise Exception("[ERROR: fill_cellcolor] Unexpected color_index has been ocurred..")
-            specified_cell = column_a + str(row_number)
-            # Colorクラスでは'00000000'は「黒」を示すが、色なしセルをget_cellcolorした返り値が'00000000'であるため、
-            # ここでは「色なし」を filltype == None の場合のみ処理することとする。
-            # また、「黒」のセルについてget_cellcolorした場合の返り値は int型で 0 であるため、
-            # fill_cellcolorの color_index に int型で 0 を指定することでfill可能である
-            if color_index == "00000000" and filltype == None:
-                self.worksheet[specified_cell].fill = PatternFill(fill_type=None)
-            else:
-                self.worksheet[specified_cell].fill = PatternFill(patternType=filltype, fgColor=my_color)
+            # if self.worksheet == None:
+            #     raise Exception("Exel file and worksheet have not been loaded yet.")
+            # if type(color_index) == int:
+            #     ## FIXME: 黒
+            #     if color_index == 1:
+            #         color_index = 0
+            #     ## FIXME: 白
+            #     elif color_index == 0:
+            #         color_index = 1
+            #     ## FIXME: 色なしにする
+            #     else:
+            #         color_index = '00000000'
+            # # color_index: 0-63
+            # if type(color_index) == int:
+            #     my_color = Color(indexed=color_index)
+            # # color_index: 00000000-FFFFFFFF
+            # elif type(color_index) == str:
+            #     my_color = Color(rgb=color_index)
+            # else:
+            #     raise Exception("[ERROR: fill_cellcolor] Unexpected color_index has been ocurred..")
+            # specified_cell = column_a + str(row_number)
+            # # Colorクラスでは'00000000'は「黒」を示すが、色なしセルをget_cellcolorした返り値が'00000000'であるため、
+            # # ここでは「色なし」を filltype == None の場合のみ処理することとする。
+            # # また、「黒」のセルについてget_cellcolorした場合の返り値は int型で 0 であるため、
+            # # fill_cellcolorの color_index に int型で 0 を指定することでfill可能である
+            # if color_index == "00000000" and filltype == None:
+            #     self.worksheet[specified_cell].fill = PatternFill(fill_type=None)
+            # else:
+            #     self.worksheet[specified_cell].fill = PatternFill(patternType=filltype, fgColor=my_color)
+            pass
         except Exception as e:
             raise Exception("[ERROR get_cellcollor] Unexpected Error has been ocurred. -> " + str(e))
 
@@ -195,7 +196,8 @@ class OpyxlWrapper:
         try:
             self.worksheet.merge_cells(target_cells)
         except Exception as e:
-            raise Exception("[ERROR merge_cells] Unexpected Error has been ocurred. -> " + str(e))
+            raise Exception("[ERROR merge_cells] Unexpected Error has been ocurred. target_cells='{target_cells}' ERROR -> {error}".format(
+                                                                                                target_cells=target_cells, error=str(e)))
 
     def save_workbook(self):
         if self.workbook == None:
@@ -219,7 +221,6 @@ class OpyxlWrapper:
         except Exception as e:
             raise Exception("[ERROR close_workbook] Unexpected Error has been ocurred. -> " + str(e))
 
-
 def check_if_file_exists(file_path)->bool:
     if os.path.exists(file_path):
         return True
@@ -238,12 +239,12 @@ def get_yaml_data(yaml_file)->dict:
     except Exception as e:
             raise Exception("[ERROR get_yaml_data] Unexpected Error has been ocurred. -> " + str(e))
 
-def readparent2writeparent(read_parent, read_row, write_row)->str:
+def readparent2writeparent(read_parent, read_row, write_row, write_column)->str:
     re_result = re.search(r'^([A-Z]+)([0-9]+)$', read_parent)
     if re_result == None:
         raise Exception("[ERROR readparent2writeparent] read_parent is incorrect format. -> " + str(read_parent))
     row_delta = write_row - read_row
-    return re_result.group(1) + str(int(re_result.group(2)) + row_delta)
+    return write_column + str(int(re_result.group(2)) + row_delta)
 
 def main():
     print("[INFO] 処理を開始します。")
@@ -260,6 +261,8 @@ def main():
             raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=read_target_filename))
         read_target_sheetnumber = yaml_data["read_target"].get("sheet_number", None)
         read_target_sheetname = yaml_data["read_target"].get("sheet_name", None)
+        if read_target_sheetnumber == None and read_target_sheetname == None:
+            raise Exception("[ERROR main] シート名かシート番号の指定が存在しません。")
         read_target_column = yaml_data["read_target"]["column_definition"]
         read_target_row = yaml_data["read_target"]["row_definition"]
         read_target_row_max = yaml_data["read_target"]["row_max"]
@@ -282,7 +285,6 @@ def main():
         # 転記先と転記元における対象カラムの数が合わない場合はエラー
         if len(read_target_column) != len(write_target_column):
             print("[ERROR main] 転記先と転記元における対象カラムの数が合いません。")
-
 
         # 列を軸としてループする
         ## 指定されたカラムの分だけループ処理する
@@ -314,7 +316,7 @@ def main():
                     if merged_cells[0] == read_cell:
                         # merged_cellsリストの1番目がセル結合の終端セルとなるため
                         # その情報から書き込み対象セルの終端を求める
-                        merge_cells_parent = write_cell + ":" + readparent2writeparent(merged_cells[1], read_target_row, write_target_row)
+                        merge_cells_parent = write_cell + ":" + readparent2writeparent(merged_cells[1], read_target_row, write_target_row, write_column)
                         opened_write_target.merge_cells(merge_cells_parent)
                         print("[INFO] {needed_merge_cells} をセル結合しました。".format(needed_merge_cells=merge_cells_parent))
                         break
@@ -347,13 +349,18 @@ def main():
         opened_write_target.save_workbook()
         opened_write_target.close_workbook()
         print("[INFO] すべての処理が正常に終了しました。")
-        sys.exit(0)
+        exitcode = 0
 
     except Exception as e:
+        # 異常があった場合はセーブしない
         print("[ERROR] 処理が異常終了しました。")
         print(str(e))
         print(str(traceback.format_exc()))
-        sys.exit(1)
+        exitcode = 1
+    
+    finally:
+        opened_write_target.close_workbook()
+        sys.exit(exitcode)
 
 if __name__ == "__main__":
     main()
