@@ -1,15 +1,31 @@
 read_target:
-  file_name: "/mnt/c/Temp/テスト_read.xlsx"
-  sheet_number: 1
-  sheet_name: "Sheet1"
-  column_definition: ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
-  row_definition: 2
-  row_max: 10
+  file_name:                             "/mnt/c/Temp/テスト_read.xlsx"
+  sheet_number:                          1
+  #sheet_name:                            "Sheet1"
+  column_definition:                     ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
+  row_definition:                        2
+  row_max:            &read_row_max      100
 
 write_target:
-  file_name: "/mnt/c/Temp/write.xlsx"
-  sheet_number: 1
-  sheet_name: "Sheet1"
-  column_definition: ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
-  row_definition: 4
-  item_number_column: "B"
+  file_name:          &write_file        "/mnt/c/Temp/write.xlsx"
+  sheet_number:       &write_sheet_num   1
+  #sheet_name:         &write_sheet_name  "Sheet1"
+  column_definition:                     ["B", "D", "C", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
+  row_definition:     &write_row         4
+
+numberitems_target:
+  file_name:          *write_file
+  sheet_number:       *write_sheet_num
+  #sheet_name:         *write_sheet_name
+  row_definition:     *write_row
+  row_max:            *read_row_max
+  item_number_column:                    "B"
+
+merge_target:
+  file_name:          *write_file
+  sheet_number:       *write_sheet_num
+  #sheet_name:         *write_sheet_name
+  row_definition:     *write_row
+  row_max:            *read_row_max
+  target_column:                         ["E", "F", "G"]
+  reference_column:                      "D"
