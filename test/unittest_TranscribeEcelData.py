@@ -53,7 +53,7 @@ class Test_get_yaml_data(unittest.TestCase):
 read_target:
   file_name:                             "/mnt/c/Temp/テスト_read.xlsx"
   sheet_number:                          1
-  sheet_name:                            "Sheet1"
+  #sheet_name:                            "Sheet1"
   column_definition:                     ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
   row_definition:                        2
   row_max:            &read_row_max      100
@@ -61,17 +61,26 @@ read_target:
 write_target:
   file_name:          &write_file        "/mnt/c/Temp/write.xlsx"
   sheet_number:       &write_sheet_num   1
-  sheet_name:         &write_sheet_name  "Sheet1"
+  #sheet_name:         &write_sheet_name  "Sheet1"
   column_definition:                     ["B", "D", "C", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
   row_definition:     &write_row         4
 
 numberitems_target:
   file_name:          *write_file
   sheet_number:       *write_sheet_num
-  sheet_name:         *write_sheet_name
+  #sheet_name:         *write_sheet_name
   row_definition:     *write_row
   row_max:            *read_row_max
   item_number_column:                    "B"
+
+merge_target:
+  file_name:          *write_file
+  sheet_number:       *write_sheet_num
+  #sheet_name:         *write_sheet_name
+  row_definition:     *write_row
+  row_max:            *read_row_max
+  target_column:                         ["E", "F", "G"]
+  reference_column:                      "D"
 """     )
         actually_result = ted.get_yaml_data(self.yaml_filename)
         self.assertEqual(dict(yaml.safe_load(expected_result)), actually_result)
@@ -415,6 +424,40 @@ class Test_merge_cells(unittest.TestCase):
             ["F2","F8"]
             ]
         self.assertEqual(expected_result, actually_result)
+
+###############################################################################
+# test -> check_if_duplicated
+class Test_check_if_duplicated(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_case_01(self):
+        columnlist = ["A", "B", "C"]
+        actually_result_bool, actually_result_col = ted.check_if_duplicated(columnlist)
+        self.assertEqual(True, actually_result_bool)
+        self.assertEqual(None, actually_result_col)
+
+    def test_case_02(self):
+        columnlist = ["A", "B", "B"]
+        actually_result_bool, actually_result_col = ted.check_if_duplicated(columnlist)
+        self.assertEqual(False, actually_result_bool)
+        self.assertEqual("B", actually_result_col)
+
+    def test_case_03(self):
+        columnlist = ["A", "BB", "B", "BBB"]
+        actually_result_bool, actually_result_col = ted.check_if_duplicated(columnlist)
+        self.assertEqual(True, actually_result_bool)
+        self.assertEqual(None, actually_result_col)
+
+    def test_case_04(self):
+        columnlist = ["A", "BB", "B", "BBB", "BB"]
+        actually_result_bool, actually_result_col = ted.check_if_duplicated(columnlist)
+        self.assertEqual(False, actually_result_bool)
+        self.assertEqual("BB", actually_result_col)
 
 
 if __name__ == "__main__":

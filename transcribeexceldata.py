@@ -246,6 +246,21 @@ def readparent2writeparent(read_parent, read_row, write_row, write_column)->str:
     row_delta = write_row - read_row
     return write_column + str(int(re_result.group(2)) + row_delta)
 
+def check_if_duplicated(columnlist):
+    try:
+        if columnlist == list:
+            raise Exception("columnlist is not a list. type -> " + str(type(columnlist)))
+        checkedlist = []
+        for col in columnlist:
+            if col in checkedlist:
+                return False, col
+            if re.search(r'^[A-Z]+$', col) == None:
+                raise Exception("'{0}' is invalid format. e.g. 'A', 'AA'".format(str(col)))
+            checkedlist.append(col)
+        return True , None
+    except Exception as e:
+        raise Exception("[ERROR check_if_duplicated] Unexpected Error has been ocurred. -> " + str(e))
+
 def main():
     print("[INFO] 処理を開始します。")
     try:
@@ -264,6 +279,9 @@ def main():
         if read_target_sheetnumber == None and read_target_sheetname == None:
             raise Exception("[ERROR main] シート名かシート番号の指定が存在しません。")
         read_target_column = yaml_data["read_target"]["column_definition"]
+        result_deplicated_bool, result_deplicated_col = check_if_duplicated(read_target_column)
+        if result_deplicated_bool == False:
+            raise Exception("[ERROR main] カラム名 '{col}' が重複しています。".format(col=result_deplicated_col))
         read_target_row = yaml_data["read_target"]["row_definition"]
         read_target_row_max = yaml_data["read_target"]["row_max"]
         opened_read_target = OpyxlWrapper(read_target_filename)
@@ -278,6 +296,9 @@ def main():
         write_target_sheetnumber = yaml_data["write_target"].get("sheet_number", None)
         write_target_sheetname = yaml_data["write_target"].get("sheet_name", None)
         write_target_column = yaml_data["write_target"]["column_definition"]
+        result_deplicated_bool, result_deplicated_col = check_if_duplicated(write_target_column)
+        if result_deplicated_bool == False:
+            raise Exception("[ERROR main] カラム名 '{col}' が重複しています。".format(col=result_deplicated_col))
         write_target_row = yaml_data["write_target"]["row_definition"]
         opened_write_target = OpyxlWrapper(write_target_filename)
         opened_write_target.load_workbook()
@@ -338,16 +359,13 @@ def main():
                         justifyLastLine=read_alignment.justifyLastLine,
                         readingOrder=read_alignment.readingOrder
                         )
-                    print("read_color: " + str(read_color) + " type: " + str(type(read_color)))
                     print("[INFO] 書き込みファイルのセル: {col}{row} を処理しました。".format(col=write_column, row=write_row))
                 # 行番号をインクリメントする
                 read_row += 1
                 write_row += 1
 
         # 保存して終了する
-        opened_read_target.close_workbook()
         opened_write_target.save_workbook()
-        opened_write_target.close_workbook()
         print("[INFO] すべての処理が正常に終了しました。")
         exitcode = 0
 
@@ -359,6 +377,7 @@ def main():
         exitcode = 1
     
     finally:
+        opened_read_target.close_workbook()
         opened_write_target.close_workbook()
         sys.exit(exitcode)
 
