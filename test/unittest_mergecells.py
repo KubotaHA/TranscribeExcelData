@@ -61,3 +61,6 @@ class Test_merge_cells_parent(unittest.TestCase):
         expected_result = "R3:R5"
         actually_result = mc.merge_cells_parent(merged_cells, write_column)
         self.assertEqual(expected_result, actually_result)
+
+if __name__ == "__main__":
+    unittest.main()
