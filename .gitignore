@@ -3,3 +3,5 @@ __pycache__
 *.tmp
 !test/テスト_read.xlsx
 !test/template_write.xlsx
+!test/読み取り元 src.xlsx
+!test/読み取り先 dest.xlsx
