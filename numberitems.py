@@ -34,8 +34,6 @@ def main():
         opened_write_target.load_workbook()
         opened_write_target.load_worksheet(write_target_sheetnumber, write_target_sheetname)
 
-        # 列を軸としてループする
-        ## 指定されたカラムの分だけループ処理する
         # 書き込み対象の行の開始番号を定義する
         write_row = write_target_row
         ## 項番を1から始める
