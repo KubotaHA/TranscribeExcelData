@@ -4,7 +4,7 @@ read_target:
   #sheet_name:                            "Sheet1"
   column_definition:                     ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
   row_definition:                        2
-  row_max:            &read_row_max      100
+  row_max:            &read_row_max      1000
 
 write_target:
   file_name:          &write_file        "/mnt/c/Temp/write.xlsx"
@@ -29,3 +29,17 @@ merge_target:
   row_max:            *read_row_max
   target_column:                         ["E", "F", "G"]
   reference_column:                      "D"
+
+checkcom_target:
+  src_file:                              "./test/読み取り元 src.xlsx"
+  dst_file:                              "./test/読み取り先 dest.xlsx"
+  src_sheet_number:                      1
+  dest_sheet_number:                     1
+  src_column_def:                        "C"
+  dst_column_def:                        "E"
+  src_row_def:                           2
+  dst_row_def:                           4
+  src_row_max:        *read_row_max
+  dst_row_max:        *read_row_max
+  null_row_max:                          50
+
