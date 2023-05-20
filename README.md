@@ -2,5 +2,5 @@
 * openpyxl
 
 # Tested Version
-* Python 3.8.10
-* openpyxl 3.0.9
+* Python 3.10.6
+* openpyxl 3.1.2

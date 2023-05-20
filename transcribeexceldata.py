@@ -20,6 +20,7 @@ class OpyxlWrapper:
         self.exel_file = exel_file
         self.workbook = None
         self.worksheet = None
+        self.worksheet_title = None
 
     def load_workbook(self):
         try:
@@ -44,16 +45,20 @@ class OpyxlWrapper:
                 # シート番号の指定が0以下はエラーとする
                 if sheet_number < 1:
                     raise Exception("[ERROR load_worksheet] Unexpected sheet number. [number > 0]")
-                worksheet_title = self.workbook.worksheets[sheet_number-1].title
-                self.worksheet = self.workbook[worksheet_title]
+                self.worksheet_title = self.workbook.worksheets[sheet_number-1].title
+                self.worksheet = self.workbook[self.worksheet_title]
             # シート名で指定
             elif sheet_number == None and sheet_name != None:
+                self.worksheet_title = sheet_name
                 self.worksheet = self.workbook[sheet_name]
             # シート番号とシート名で指定 ※シート名を使用する
             elif sheet_number != None and sheet_name != None:
+                self.worksheet_title = sheet_name
                 self.worksheet = self.workbook[sheet_name]
             else:
                 raise Exception("[ERROR: load_worksheet] sheet_number and sheet_name are None.")
+        except IndexError as ie:
+            raise Exception("[ERROR load_worksheet] 指定のシート番号 {number} が対象ファイル上に存在しません。 -> ".format(number=str(sheet_number)) + str(ie))
         except Exception as e:
             raise Exception("[ERROR load_worksheet] Unexpected Error has been ocurred. -> " + str(e))
 
@@ -178,7 +183,7 @@ class OpyxlWrapper:
                 horizontal="general"
             self.worksheet[specified_cell].alignment = Alignment(
                                                             horizontal=horizontal,
-                                                            vertical=vertical,
+                                                            vertical=vertical, 
                                                             text_rotation=text_rotation,
                                                             wrap_text=wrap_text,
                                                             shrink_to_fit=shrink_to_fit,
@@ -198,6 +203,17 @@ class OpyxlWrapper:
         except Exception as e:
             raise Exception("[ERROR merge_cells] Unexpected Error has been ocurred. target_cells='{target_cells}' ERROR -> {error}".format(
                                                                                                 target_cells=target_cells, error=str(e)))
+
+    def reset_workbook_properties(self):
+        if self.workbook == None:
+            raise Exception("[ERROR: reset_workbook_properties] Exel file has not been loaded yet.")
+        try:
+            # 作成者の削除：作成者=openpyxlの情報を削除
+            self.workbook.properties.creator = None
+            # 最終更新者の削除
+            self.workbook.properties.lastModifiedBy = None
+        except Exception as e:
+            raise Exception("[ERROR reset_workbook_properties] Unexpected Error has been ocurred. -> " + str(e))
 
     def save_workbook(self):
         if self.workbook == None:
@@ -364,6 +380,8 @@ def main():
                 read_row += 1
                 write_row += 1
 
+        # workbookのプロパティをリセットする(作成者:openpyxlを削除)
+        opened_write_target.reset_workbook_properties()
         # 保存して終了する
         opened_write_target.save_workbook()
         print("[INFO] すべての処理が正常に終了しました。")
@@ -375,7 +393,7 @@ def main():
         print(str(e))
         print(str(traceback.format_exc()))
         exitcode = 1
-    
+
     finally:
         opened_read_target.close_workbook()
         opened_write_target.close_workbook()
