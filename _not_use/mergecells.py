@@ -83,8 +83,8 @@ def main():
         # workbookのプロパティをリセットする(作成者:openpyxlを削除)
         opened_write_target.reset_workbook_properties()
         # 保存して終了する
-        opened_write_target.close_workbook()
         opened_write_target.save_workbook()
+        opened_write_target.close_workbook()
         print("[INFO] すべての処理が正常に終了しました。")
         exitcode = 0
         sys.exit(exitcode)
