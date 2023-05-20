@@ -83,9 +83,11 @@ def main():
         # workbookのプロパティをリセットする(作成者:openpyxlを削除)
         opened_write_target.reset_workbook_properties()
         # 保存して終了する
+        opened_write_target.close_workbook()
         opened_write_target.save_workbook()
         print("[INFO] すべての処理が正常に終了しました。")
         exitcode = 0
+        sys.exit(exitcode)
 
     except Exception as e:
         # 異常があった場合はセーブしない
@@ -93,11 +95,7 @@ def main():
         print(str(e))
         print(str(traceback.format_exc()))
         exitcode = 1
-    
-    finally:
-        opened_write_target.close_workbook()
         sys.exit(exitcode)
-
 
 if __name__ == "__main__":
     main()
