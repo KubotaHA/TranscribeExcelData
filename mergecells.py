@@ -79,7 +79,9 @@ def main():
                     print("[INFO] 結合対象セル: {colrow} を処理しました。".format(colrow=str(target_cells_parent)))
                 # 行をインクリメントする
                 write_row += 1
-
+        
+        # workbookのプロパティをリセットする(作成者:openpyxlを削除)
+        opened_write_target.reset_workbook_properties()
         # 保存して終了する
         opened_write_target.save_workbook()
         print("[INFO] すべての処理が正常に終了しました。")

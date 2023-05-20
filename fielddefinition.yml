@@ -13,14 +13,6 @@ write_target:
   column_definition:                     ["B", "D", "C", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
   row_definition:     &write_row         4
 
-numberitems_target:
-  file_name:          *write_file
-  sheet_number:       *write_sheet_num
-  #sheet_name:         *write_sheet_name
-  row_definition:     *write_row
-  row_max:            *read_row_max
-  item_number_column:                    "B"
-
 merge_target:
   file_name:          *write_file
   sheet_number:       *write_sheet_num
@@ -30,16 +22,23 @@ merge_target:
   target_column:                         ["E", "F", "G"]
   reference_column:                      "D"
 
+numberitems_target:
+  file_name:                             "/mnt/c/Temp/write.xlsx"
+  sheet_number:                          1
+  #sheet_name:         *write_sheet_name
+  column_definition:                    "B"
+  row_definition:                        2
+  row_max:            *read_row_max
+
 checkcom_target:
   src_file:                              "./test/読み取り元 src.xlsx"
-  dst_file:                              "./test/読み取り先 dest.xlsx"
   src_sheet_number:                      1
-  dest_sheet_number:                     1
   src_column_def:                        "C"
-  dst_column_def:                        "E"
   src_row_def:                           2
-  dst_row_def:                           4
   src_row_max:        *read_row_max
+  # ------------------------------------------
+  dst_file:                              "./test/読み取り先 dest.xlsx"
+  dest_sheet_number:                     1
+  dst_column_def:                        "E"
+  dst_row_def:                           4
   dst_row_max:        *read_row_max
-  null_row_max:                          50
-
