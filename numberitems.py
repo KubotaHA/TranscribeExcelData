@@ -73,7 +73,7 @@ def main():
             raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=write_target_filename))
         ## 対象シートについて引数指定がなかった場合は fielddefinition.yml から取得する
         if args.sheet_number == None:
-            write_target_sheetnumber = yaml_data["checkcom_target"].get("src_sheet_number", None)
+            write_target_sheetnumber = yaml_data["checkcom_target"].get("sheet_number", None)
         else:
             write_target_sheetnumber = args.sheet_number
         write_target_sheetname = yaml_data["numberitems_target"].get("sheet_name", None)
