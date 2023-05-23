@@ -38,7 +38,7 @@ checkcom_target:
   src_row_max:        *read_row_max
   # ------------------------------------------
   dst_file:                              "./test/読み取り先 dest.xlsx"
-  dest_sheet_number:                     1
+  dst_sheet_number:                      1
   dst_column_def:                        "E"
   dst_row_def:                           4
   dst_row_max:        *read_row_max
