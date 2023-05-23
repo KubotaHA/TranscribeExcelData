@@ -24,7 +24,7 @@ def main():
             usage="{prog} -f <file path> -n <sheet number> [OPTIONS]\n  e.g. $ python3 {prog} -f target.xlsx -n 3".format(
                     prog=str(os.path.basename(__file__))),
             # 説明
-            description="[Description: このプログラムは指定ファイル同士の指定セルの値を比較します。]",
+            description="[Description: このプログラムは指定ファイル内の指定行を軸に自動で項番書き込みを行います。]",
             # -h/--helpヘルプオプションの有効化
             add_help=True
         )

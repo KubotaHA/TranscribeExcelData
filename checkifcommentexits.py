@@ -105,7 +105,7 @@ def main():
             raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=dst_filename))
         ## 対象シートについて引数指定がなかった場合は fielddefinition.yml から取得する
         if args.sheet_number == None:
-            dst_sheetnumber = yaml_data["checkcom_target"].get("src_sheet_number", None)
+            dst_sheetnumber = yaml_data["checkcom_target"].get("dst_sheet_number", None)
         else:
             dst_sheetnumber = args.sheet_number
         dst_row = yaml_data["checkcom_target"]["dst_row_def"]
@@ -124,7 +124,7 @@ def main():
         # 読み取り先のデータと読み取り元データを比較して一致しているものを出力する
         result_list = []
         for dst in dst_comment_list:
-            print("[INFO] Debug:{cell}: '{value}'".format(cell=str(dst["cell"]), value=str(dst["value"])))
+            print("[INFO] Debug: CELL={cell}: '{value}'".format(cell=str(dst["cell"]), value=str(dst["value"])))
             for src in src_comment_list:
                 if replace_blank(src["value"]) == replace_blank(dst["value"]):
                     result_list.append(dst)
@@ -137,6 +137,7 @@ def main():
                     cell=item["cell"], data=item["value"]
                 ))
         else:
+            print("[INFO]")
             print("[INFO] 一致したデータはありませんでした。")
         # 終了
         print("[INFO] すべての処理が正常に終了しました。")
