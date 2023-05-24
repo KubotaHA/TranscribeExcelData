@@ -22,9 +22,15 @@ class OpyxlWrapper:
     def load_workbook(self):
         try:
             self.workbook = opyxl.load_workbook(filename=self.exel_file)
+            return self.workbook
+        except opyxl.utils.exceptions.InvalidFileException as ife:
+            raise Exception(
+                "[ERROR load_workbook] サポートされていないファイル形式が指定されました。'{file}'はExcelファイルでない可能性があります。".format(
+                    file=self.exel_file
+                )
+            )
         except Exception as e:
             raise Exception("[ERROR load_workbook] Unexpected Error has been ocurred. -> " + str(e))
-        return self.workbook
 
     # read_only でworkbookを読み込むとセルの一部の属性が取得できなくなるため基本的には使用しないこととする
     # def load_workbook_readonly(self):
@@ -199,11 +205,11 @@ class OpyxlWrapper:
             self.worksheet.merge_cells(target_cells)
         except Exception as e:
             raise Exception("[ERROR merge_cells] Unexpected Error has been ocurred. target_cells='{target_cells}' ERROR -> {error}".format(
-                                                                                                target_cells=target_cells, error=str(e)))
+                         target_cells=target_cells, error=str(e)))
 
     def reset_workbook_properties(self):
         if self.workbook == None:
-            raise Exception("[ERROR: reset_workbook_properties] Exel file has not been loaded yet.")
+            raise Exception("[ERROR: reset_workbook_properties] Excel file has not been loaded yet.")
         try:
             # 作成者の削除：作成者=openpyxlの情報を削除
             self.workbook.properties.creator = None

@@ -72,7 +72,7 @@ def main():
         print(str(traceback.format_exc()))
         exitcode = 1
         sys.exit(exitcode)
-        
+
     try:
         # 処理の開始
         print("[INFO] 処理を開始します...")
@@ -80,14 +80,14 @@ def main():
         # fielddefinition.yml を読み込む
         fielddefinition = "fielddefinition.yml"
         if check_if_file_exists(fielddefinition) == False:
-            raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=fielddefinition))
+            raise Exception("[ERROR main] ファイル '{file}' が存在しません。".format(file=fielddefinition))
         yaml_data = get_yaml_data(fielddefinition)
 
         # 読み取り元のExcelファイルを読み込む
         src_filename = yaml_data["checkcom_target"]["src_file"]
         if check_if_file_exists(src_filename) == False:
-            raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=src_filename))
-        src_sheetnumber =yaml_data["checkcom_target"].get("src_sheet_number", None)
+            raise Exception("[ERROR main] ファイル '{file}' が存在しません。".format(file=src_filename))
+        src_sheetnumber = yaml_data["checkcom_target"].get("src_sheet_number", None)
         src_row = yaml_data["checkcom_target"]["src_row_def"]
         src_row_max = yaml_data["checkcom_target"]["src_row_max"]
         src_column = yaml_data["checkcom_target"]["src_column_def"]
@@ -102,7 +102,7 @@ def main():
         else:
             dst_filename = args.file_path
         if check_if_file_exists(dst_filename) == False:
-            raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=dst_filename))
+            raise Exception("[ERROR main] ファイル '{file}' が存在しません。".format(file=dst_filename))
         ## 対象シートについて引数指定がなかった場合は fielddefinition.yml から取得する
         if args.sheet_number == None:
             dst_sheetnumber = yaml_data["checkcom_target"].get("dst_sheet_number", None)
@@ -146,12 +146,14 @@ def main():
         sys.exit(0)
 
     except Exception as e:
-        opened_src_target.close_workbook()
-        opened_dst_target.close_workbook()
         print("[ERROR: main] 処理が異常終了しました。")
         print(str(e))
         print("[ERROR: main] Traceback is as follows.....................")
         print(str(traceback.format_exc()))
+        if opened_src_target.workbook != None:
+            opened_src_target.close_workbook()
+        if opened_dst_target.workbook != None:
+            opened_dst_target.close_workbook()
         sys.exit(1)
 
 if __name__ == "__main__":
