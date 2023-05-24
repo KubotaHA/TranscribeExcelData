@@ -49,37 +49,26 @@ class Test_get_yaml_data(unittest.TestCase):
     def test_case_02(self):
         expected_result = (
 """
-read_target:
-  file_name:                             "/mnt/c/Temp/テスト_read.xlsx"
-  sheet_number:                          1
-  #sheet_name:                            "Sheet1"
-  column_definition:                     ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
-  row_definition:                        2
-  row_max:            &read_row_max      100
-
-write_target:
-  file_name:          &write_file        "/mnt/c/Temp/write.xlsx"
-  sheet_number:       &write_sheet_num   1
-  #sheet_name:         &write_sheet_name  "Sheet1"
-  column_definition:                     ["B", "D", "C", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
-  row_definition:     &write_row         4
-
 numberitems_target:
-  file_name:          *write_file
-  sheet_number:       *write_sheet_num
-  #sheet_name:         *write_sheet_name
-  row_definition:     *write_row
-  row_max:            *read_row_max
-  item_number_column:                    "B"
+  file_name:                             "/mnt/c/Temp/write.xlsx"
+  sheet_number:                          1
+  #sheet_name:
+  column_definition:                     "B"
+  row_definition:                        2
+  row_max:            &row_max           1000
 
-merge_target:
-  file_name:          *write_file
-  sheet_number:       *write_sheet_num
-  #sheet_name:         *write_sheet_name
-  row_definition:     *write_row
-  row_max:            *read_row_max
-  target_column:                         ["E", "F", "G"]
-  reference_column:                      "D"
+checkcom_target:
+  src_file:                              "./test/読み取り元 src.xlsx"
+  src_sheet_number:                      1
+  src_column_def:                        "C"
+  src_row_def:                           2
+  src_row_max:        *row_max
+  # ------------------------------------------
+  dst_file:                              "./test/読み取り先 dest.xlsx"
+  dst_sheet_number:                      1
+  dst_column_def:                        "E"
+  dst_row_def:                           4
+  dst_row_max:        *row_max
 """     )
         actually_result = ted.get_yaml_data(self.yaml_filename)
         self.assertEqual(dict(yaml.safe_load(expected_result)), actually_result)
@@ -367,9 +356,9 @@ class Test_get_mergedcells_list(unittest.TestCase):
         self.ow.load_workbook()
         self.ow.load_worksheet(1, None)
         expected_result = [
-            ['C3','C4'],
+            ['F3','F4'],
             ['D3','D4'],
-            ['F3','F4']
+            ['C3','C4'],
         ]
         actually_result = self.ow.get_mergedcells_list()
         self.assertEqual(expected_result, actually_result)
@@ -419,8 +408,8 @@ class Test_merge_cells(unittest.TestCase):
         actually_result = self.ow.get_mergedcells_list()
         expected_result = [
             ["B4","B6"],
+            ["F2","F8"],
             ["C4","C7"],
-            ["F2","F8"]
             ]
         self.assertEqual(expected_result, actually_result)
 

@@ -6,6 +6,7 @@ import sys
 import traceback
 import yaml
 import re
+from transcribeexceldata import OpyxlWrapper
 
 def check_if_file_exists(file_path)->bool:
     if os.path.exists(file_path):
