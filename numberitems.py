@@ -44,23 +44,10 @@ def main():
 
     try:
         print("[INFO] 処理を開始します。")
-        # 警告の表示
-        print("[INFO] !!警告!! Excelファイル内の挿入図形やグラフが削除される可能性があります。")
-        if args.yes_skip_warning != True:
-            print("[WARN] --> 実行前にバックアップを推奨します。続行しますか？ (y/n)")
-            continue_process = input('> ')
-        else:
-            continue_process = 'y'
-        # 続行有無の判定
-        if continue_process == 'y':
-            pass
-        else:
-            print("[INFO] {continue_process} が指定されたため、処理を中断しました。".format(continue_process=continue_process))
-            sys.exit(0)
         # fielddefinition.yml を読み込む
         fielddefinition = "fielddefinition.yml"
         if check_if_file_exists(fielddefinition) == False:
-            raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=fielddefinition))
+            raise Exception("[ERROR main] ファイル '{file}' が存在しません。".format(file=fielddefinition))
         yaml_data = get_yaml_data(fielddefinition)
 
         # 書き込み対象のExcelファイルを読み込む
@@ -70,7 +57,7 @@ def main():
         else:
             write_target_filename = args.file_path
         if check_if_file_exists(write_target_filename) == False:
-            raise Exception("[ERROR main] ファイル {file} が存在しません。".format(file=write_target_filename))
+            raise Exception("[ERROR main] ファイル '{file}' が存在しません。".format(file=write_target_filename))
         ## 対象シートについて引数指定がなかった場合は fielddefinition.yml から取得する
         if args.sheet_number == None:
             write_target_sheetnumber = yaml_data["checkcom_target"].get("sheet_number", None)
@@ -83,6 +70,24 @@ def main():
         opened_write_target = OpyxlWrapper(write_target_filename)
         opened_write_target.load_workbook()
         opened_write_target.load_worksheet(write_target_sheetnumber, write_target_sheetname)
+        # ロードしたシート情報の表示
+        print("[INFO] -> シート情報= NUM: {number}, NAME: '{name}'".format(
+            number=str(write_target_sheetnumber), name=opened_write_target.worksheet_title))
+        # 警告の表示
+        print("[INFO] !!警告!! Excelファイル内の挿入図形やグラフが削除される可能性があります。")
+        if args.yes_skip_warning != True:
+            print("[WARN] --> 実行前にバックアップを推奨します。続行しますか？ (y/n)")
+            continue_process = input('> ')
+        else:
+            continue_process = 'y'
+        # 続行有無の判定
+        if continue_process == 'y':
+            pass
+        else:
+            print("[INFO] '{continue_process}' が指定されたため、処理を中断しました。".format(continue_process=continue_process))
+            if opened_write_target.workbook != None:
+                opened_write_target.close_workbook()
+            sys.exit(0)
 
         # 列を軸としてループする
         ## 指定されたカラムの分だけループ処理する
@@ -105,7 +110,7 @@ def main():
                 item_number += 1
             # 行番号をインクリメントする
             write_row += 1
-        
+
         # workbookのプロパティをリセットする(作成者:openpyxlを削除)
         opened_write_target.reset_workbook_properties()
         # 保存して終了する
@@ -115,12 +120,13 @@ def main():
         sys.exit(0)
 
     except Exception as e:
-        opened_write_target.close_workbook()
         # 異常があった場合はセーブしない
         print("[ERROR] 処理が異常終了しました。")
         print(str(e))
         print("[ERROR: main] Traceback is as follows.....................")
         print(str(traceback.format_exc()))
+        if opened_write_target.workbook != None:
+            opened_write_target.close_workbook()
         sys.exit(1)
 
 if __name__ == "__main__":
